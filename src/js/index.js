@@ -49,6 +49,7 @@ let isLooping = false; // Estado inicial del bucle (desactivado)
 let isShuffle = false; // Estado inicial del modo aleatorio (desactivado)
 let favorites = JSON.parse(localStorage.getItem('favorites')) || []; // Array de canciones favoritas
 
+// --- GET ---
 // Fetch songs
 // Hacemos el GET de la API, sacamos los datos con el fetch
 fetch(songsEndPoint, options)
@@ -90,6 +91,8 @@ fetch(songsEndPoint, options)
     console.error('Error fetching songs:', error.message);
   });
 
+// --- CREAR CANCIÓN EN EL DOM ---
+// Crea una canción para implementarla en el DOM
 function createSongItem(song) {
   // Añadimos al DOM el contenedor de la canción
   const songItem = document.createElement('div');
@@ -111,6 +114,8 @@ function createSongItem(song) {
   // Añadimos al DOM la duración de la canción
   const duration = document.createElement('span');
   const audio = new Audio(song.filepath);
+
+  // Se mostrará la duración una vez hayan cargado los datos del archivo de audio
   audio.addEventListener('loadedmetadata', () => {
     const minutes = Math.floor(audio.duration / 60);
     const seconds = Math.floor(audio.duration % 60).toString().padStart(2, '0');
@@ -166,6 +171,7 @@ function createSongItem(song) {
   return songItem;
 }
 
+// ---CONTROL DEL AUDIO EN REPRODUCCIÓN---
 // Función para seleccionar una canción
 function selectSong(song) {
   // Comprobar si estamos en la vista de favoritos
@@ -215,26 +221,6 @@ function selectSong(song) {
   playSong(song.filepath);
 }
 
-// Función que alterna entre el Play y el Pause 
-function togglePlayPause() {
-  if (!currentSong) return;
-
-  if (!currentAudio || currentAudio.src !== currentSong.filepath) {
-    // If no audio is loaded or a new song is selected, create and play a new Audio
-    playSong(currentSong);
-  } else if (isPlaying) {
-    // If currently playing, pause the song
-    currentAudio.pause();
-    isPlaying = false;
-    updatePlayPauseButton(false);
-  } else {
-    // If paused, resume playing
-    currentAudio.play();
-    isPlaying = true;
-    updatePlayPauseButton(true);
-  }
-}
-
 // Reproduce la canción que corresponda según la situación en la que se encuentre el reproductor
 function playSong(songUrl) {
   // Para la canción actual en reproducción para poder reproducir la siguiente y que no se solapen
@@ -255,16 +241,27 @@ function playSong(songUrl) {
   updatePlayPauseButton(true);
 
   // Agregar un event listener para cuando la canción termine
-  currentAudio.addEventListener('ended', () => {
-    if (isLooping) {
-      currentAudio.currentTime = 0; // Reinicia la canción actual
-      currentAudio.play();
-    } else if (isShuffle) {
-      playNextSong(); // Reproduce una canción aleatoria
-    } else {
-      playNextSong(); // Reproduce la siguiente canción
-    }
-  });
+  if (currentSongItem) {
+    currentSongItem.classList.add('song-item-active');
+    currentAudio.addEventListener('ended', () => {
+      // Quitar la clase active cuando la canción termine
+      if (currentSongItem) {
+        currentSongItem.classList.remove('song-item-active');
+      }
+      if (isLooping) {
+        currentAudio.currentTime = 0; // Reinicia la canción actual
+        currentAudio.play();
+      } else if (isShuffle) {
+        if (songsContainer.classList.contains('favorites-view')) {
+          playRandomSong(favorites); // Reproduce una canción aleatoria en favoritos
+        } else {
+          playRandomSong(songsList); // Reproduce una canción aleatoria
+        }
+      } else {
+        playNextSong(); // Reproduce la siguiente canción
+      }
+    });
+  }
 
   // Este evento actualiza el valor de la progress bar según la duración de la canción
   currentAudio.addEventListener('timeupdate', () => {
@@ -277,17 +274,138 @@ function playSong(songUrl) {
     currentTime.textContent = formatTime(currentAudio.currentTime);
   });
 
-  // Agregar la clase active al elemento de la canción actual (si existe)
-  if (currentSongItem) {
-    currentSongItem.classList.add('song-item-active');
+}
 
-    // Agregar un event listener para cuando la canción termine
-    currentAudio.addEventListener('ended', () => {
-      // Quitar la clase active cuando la canción termine
-      if (currentSongItem) {
-        currentSongItem.classList.remove('song-item-active');
-      }
-    });
+// --- CONTROL FUNCIONES DEL REPRODUCTOR
+// Reproduce la siguiente canción en caso de seleccionar el icono de next-song
+function playNextSong() {
+  if (isLooping) {
+    // Si está activo el loop, reinicia la canción actual y no cambia
+    currentAudio.currentTime = 0;
+    currentAudio.play();
+    return;
+  }
+
+  if (songsContainer.classList.contains('favorites-view')) {
+    // Si estamos en la vista de favoritos
+    if (isShuffle) {
+      // Si shuffle está activo, reproduce una canción aleatoria de favoritos
+      playRandomSong(favorites);
+    } else {
+      // Si no, reproduce la siguiente canción de favoritos
+      currentSongIndex = (currentSongIndex + 1) % favorites.length;
+      selectSong(favorites[currentSongIndex]);
+    }
+  } else {
+    // Si no estamos en la vista de favoritos, funciona como antes
+    if (isShuffle) {
+      playRandomSong(songsList);
+    } else {
+      currentSongIndex = (currentSongIndex + 1) % songsList.length;
+      selectSong(songsList[currentSongIndex]);
+    }
+  }
+}
+
+// Reproduce la canción anterior en caso de seleccionar el icono de previous-song
+function playPreviousSong() {
+  if (isLooping) {
+    // Si está activo el loop, reinicia la canción actual y no cambia
+    currentAudio.currentTime = 0;
+    currentAudio.play();
+    return;
+  }
+
+  if (songsContainer.classList.contains('favorites-view')) {
+    // Si estamos en la vista de favoritos
+    if (isShuffle) {
+      // Si shuffle está activo, reproduce una canción aleatoria de favoritos
+      playRandomSong(favorites);
+    } else {
+      // Si no, reproduce la canción anterior de favoritos
+      currentSongIndex = (currentSongIndex - 1 + favorites.length) % favorites.length;
+      selectSong(favorites[currentSongIndex]);
+    }
+  } else {
+    // Si no estamos en la vista de favoritos, funciona como antes
+    if (isShuffle) {
+      playRandomSong(songsList);
+    } else {
+      currentSongIndex = (currentSongIndex - 1 + songsList.length) % songsList.length;
+      selectSong(songsList[currentSongIndex]);
+    }
+  }
+}
+
+// Reproduce una canción aleatoria en caso de estar activado el modo aleatorio
+function playRandomSong(songs) {
+  if (!songs.length) return; // Si no hay canciones, salir
+
+  let randomIndex;
+  do {
+    randomIndex = Math.floor(Math.random() * songs.length); // Genera un índice aleatorio
+  } while (songs[randomIndex].filepath === currentSong.filepath); // Verifica que no sea la misma canción
+
+  const randomSong = songs[randomIndex];
+  selectSong(randomSong); // Reproduce la canción aleatoria
+}
+
+// Función que alterna entre el Play y el Pause 
+function togglePlayPause() {
+  if (!currentSong) return;
+
+  // Si el audio no está cargado o la canción no está seleccionada, reproduce un nuevo audio
+  if (!currentAudio || currentAudio.src !== currentSong.filepath) {
+    playSong(currentSong);
+  } else if (isPlaying) {
+    currentAudio.pause();
+    isPlaying = false;
+    updatePlayPauseButton(false);
+  } else {
+    currentAudio.play();
+    isPlaying = true;
+    updatePlayPauseButton(true);
+  }
+}
+
+// Alterna el estado del icono escuchar una canción en bucle
+function toggleLoop() {
+  isLooping = !isLooping; // Alterna el estado
+
+  // Cambiar el ícono o estilo del botón según el estado del bucle
+  if (isLooping) {
+    loopButtonIcon.classList.add('active'); // Clase CSS opcional para indicar activación
+    loopButtonIcon.style.color = 'var(--color-primary)'; // Ejemplo de cambio visual
+    if (isShuffle) {
+      isShuffle = false; // Desactiva el estado de shuffle
+      const shuffleButtonIcon = document.querySelector('#shuffle-button i');
+      shuffleButtonIcon.classList.remove('active');
+      shuffleButtonIcon.style.color = ''; // Restaurar estilo del botón shuffle
+    }
+  } else {
+    loopButtonIcon.classList.remove('active');
+    loopButtonIcon.style.color = ''; // Restaurar color original
+  }
+}
+
+// Alterna el estado del icono al usar el modo aleatorio
+function toggleShuffle() {
+  isShuffle = !isShuffle; // Alterna el estado
+
+  // Cambiar el estilo del botón según el estado
+  if (isShuffle) {
+    shuffleButtonIcon.classList.add('active');
+    shuffleButtonIcon.style.color = 'var(--color-primary)'; // Cambio visual al activar
+    // Desactivar el loop si estaba activo
+    if (isLooping) {
+      isLooping = false; // Desactiva el estado de loop
+      const loopButtonIcon = document.querySelector('#loop-button i');
+      loopButtonIcon.classList.remove('active');
+      loopButtonIcon.style.color = ''; // Restaurar estilo del botón loop
+    }
+  } else {
+    shuffleButtonIcon.classList.remove('active');
+    shuffleButtonIcon.style.color = ''; // Restaurar estilo original
   }
 }
 
@@ -305,13 +423,59 @@ function updatePlayPauseButton(playing) {
   }
 }
 
-// Función para formatear el tiempo en minutos y segundos
-function formatTime(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
-  return `${minutes}:${remainingSeconds}`;
+// --- CARGAR FILTRO TODAS LAS CANCIONES ---
+// Evento que controla la selección del botón "Todos" en el filtro
+allSongsButton.addEventListener('click', () => {
+  loadAllSongs();
+})
+
+// Carga todas las canciones en caso de seleccionar "Todos" en el filtro
+function loadAllSongs() {
+  songsContainer.innerHTML = ""; // Limpia el contenedor
+  if (songsContainer.classList.contains('favorites-view')) {
+    songsContainer.classList.remove('favorites-view'); // Elimina la clase de favoritos
+  }
+
+  // Carga todas las canciones en el DOM
+  songsList.forEach(song => {
+    const songItem = createSongItem(song);
+    songsContainer.appendChild(songItem);
+  });
 }
 
+// --- CARGAR FILTRO CANCIONES FAVORITAS ---
+// Evento que detecta si se ha pulsado el botón de favoritos
+favsButton.addEventListener("click", () => {
+  loadFavorites();
+});
+
+// Función que carga las canciones favoritas en la lista de favoritos y en el DOM
+function loadFavorites() {
+  // Limpiar el contenedor antes de cargar
+  songsContainer.innerHTML = "";
+
+  // Añadir una clase especial al contenedor para identificar la vista de favoritos
+  songsContainer.classList.add('favorites-view');
+
+  // Cargar favoritos desde LocalStorage
+  favorites = JSON.parse(localStorage.getItem('favorites')) || []; // Aseguramos que favorites esté actualizado
+
+  // Comprobar si existen canciones favoritas
+  if (favorites.length === 0) {
+    songsContainer.innerHTML = "<p>No tienes canciones favoritas.</p>";
+    return;
+  }
+
+  // Crear un item para cada canción favorita
+  favorites.forEach(song => {
+    const songItem = createSongItem(song);
+    songsContainer.appendChild(songItem);
+  });
+}
+
+
+
+// --- PROGRESS BAR ---
 // Event listener para la barra de progreso
 progressBar.addEventListener('mousedown', (e) => {
   // Se obtiene la posición y tamaño del elemento progressBar en la ventana del navegador.
@@ -355,6 +519,44 @@ function updateCurrentTime(progress) {
   }
 }
 
+// Función para formatear el tiempo en minutos y segundos
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${remainingSeconds}`;
+}
+
+
+// --- BARRA DE VOLUMEN ---
+// Este evento controla el icono del volumen según el valor del type range
+volumeRange.addEventListener('input', (e) => {
+  if (currentAudio != null) {
+    currentAudio.volume = e.target.value;
+  }
+
+  // Cambia el icono según el valor del volumen
+  if (e.target.value == 0) {
+    // Si el volumen es 0, mostramos el icono de mute
+    volumenContainer.firstElementChild.className = "";
+    volumenContainer.firstElementChild.classList.add("bx", "bxs-volume-mute");
+  } else if (e.target.value <= 0.50) {
+    // Si el volumen es alto (0.50 o más), mostramos el icono de volumen completo
+    volumenContainer.firstElementChild.className = "";
+    volumenContainer.firstElementChild.classList.add("bx", "bxs-volume-low");
+  } else {
+    // Para otros valores, podemos mantener el icono de volumen medio (opcional)
+    volumenContainer.firstElementChild.className = "";
+    volumenContainer.firstElementChild.classList.add("bx", "bxs-volume-full");
+  }
+})
+
+// Permite que se visualice el valor del volumen en la barra del input type=range
+volumeRange.addEventListener('input', function () {
+  const value = (this.value - this.min) / (this.max - this.min) * 100;
+  this.style.setProperty('--range-progress', `${value}%`);
+});
+
+// --- MODAL Y POST ---
 // Evento que permite mostrar el modal
 addQueueButton.addEventListener('click', () => {
   modalContainer.classList.replace("hidden", "modal-container");
@@ -369,6 +571,7 @@ window.onclick = function (event) {
   }
 }
 
+// Este evento controla cuando se pulsa el botón de cerrar el modal
 closeFormButton.addEventListener('click', () => {
   closeModal();
 })
@@ -465,206 +668,6 @@ addQueueForm.addEventListener("submit", function (e) {
     });
 });
 
-// Este evento controla el icono del volumen según el valor del type range
-volumeRange.addEventListener('input', (e) => {
-  if (currentAudio != null) {
-    currentAudio.volume = e.target.value;
-  }
 
-  // Cambia el icono según el valor del volumen
-  if (e.target.value == 0) {
-    // Si el volumen es 0, mostramos el icono de mute
-    volumenContainer.firstElementChild.className = "";
-    volumenContainer.firstElementChild.classList.add("bx", "bxs-volume-mute");
-  } else if (e.target.value <= 0.50) {
-    // Si el volumen es alto (0.50 o más), mostramos el icono de volumen completo
-    volumenContainer.firstElementChild.className = "";
-    volumenContainer.firstElementChild.classList.add("bx", "bxs-volume-low");
-  } else {
-    // Para otros valores, podemos mantener el icono de volumen medio (opcional)
-    volumenContainer.firstElementChild.className = "";
-    volumenContainer.firstElementChild.classList.add("bx", "bxs-volume-full");
-  }
-})
 
-// Permite que se visualice el valor del volumen en la barra del input type=range
-volumeRange.addEventListener('input', function () {
-  const value = (this.value - this.min) / (this.max - this.min) * 100;
-  this.style.setProperty('--range-progress', `${value}%`);
-});
-
-// Reproduce la siguiente canción en caso de seleccionar el icono de next-song
-function playNextSong() {
-  if (isLooping) {
-    // Si está activo el loop, reinicia la canción actual y no cambia
-    currentAudio.currentTime = 0;
-    currentAudio.play();
-    return;
-  }
-
-  if (songsContainer.classList.contains('favorites-view')) {
-    // Si estamos en la vista de favoritos
-    if (isShuffle) {
-      // Si shuffle está activo, reproduce una canción aleatoria de favoritos
-      playRandomFavSong();
-    } else {
-      // Si no, reproduce la siguiente canción de favoritos
-      currentSongIndex = (currentSongIndex + 1) % favorites.length;
-      selectSong(favorites[currentSongIndex]);
-    }
-  } else {
-    // Si no estamos en la vista de favoritos, funciona como antes
-    if (isShuffle) {
-      playRandomSong();
-    } else {
-      currentSongIndex = (currentSongIndex + 1) % songsList.length;
-      selectSong(songsList[currentSongIndex]);
-    }
-  }
-}
-
-// Reproduce la canción anterior en caso de seleccionar el icono de previous-song
-function playPreviousSong() {
-  if (isLooping) {
-    // Si está activo el loop, reinicia la canción actual y no cambia
-    currentAudio.currentTime = 0;
-    currentAudio.play();
-    return;
-  }
-
-  if (songsContainer.classList.contains('favorites-view')) {
-    // Si estamos en la vista de favoritos
-    if (isShuffle) {
-      // Si shuffle está activo, reproduce una canción aleatoria de favoritos
-      playRandomFavSong();
-    } else {
-      // Si no, reproduce la canción anterior de favoritos
-      currentSongIndex = (currentSongIndex - 1 + favorites.length) % favorites.length;
-      selectSong(favorites[currentSongIndex]);
-    }
-  } else {
-    // Si no estamos en la vista de favoritos, funciona como antes
-    if (isShuffle) {
-      playRandomSong();
-    } else {
-      currentSongIndex = (currentSongIndex - 1 + songsList.length) % songsList.length;
-      selectSong(songsList[currentSongIndex]);
-    }
-  }
-}
-
-// Reproduce una canción aleatoria en caso de estar en la vista de favoritos y estar activado el modo aleatorio
-function playRandomFavSong() {
-  if (!favorites.length) return; // Si no hay favoritos, salir
-
-  let randomIndex;
-  do {
-    randomIndex = Math.floor(Math.random() * favorites.length);
-  } while (favorites[randomIndex].filepath === currentSong.filepath);
-
-  const randomSong = favorites[randomIndex];
-  selectSong(randomSong);
-}
-
-// Reproduce una canción aleatoria en caso de estar en la vista de todas las canciones y estar activado el modo aleatorio
-function playRandomSong() {
-  if (!songsList.length) return; // Si no hay canciones, salir
-
-  let randomIndex;
-  do {
-    randomIndex = Math.floor(Math.random() * songsList.length); // Genera un índice aleatorio
-  } while (songsList[randomIndex].filepath === currentSong.filepath); // Verifica que no sea la misma canción
-
-  const randomSong = songsList[randomIndex];
-  selectSong(randomSong); // Reproduce la canción aleatoria
-}
-
-// Alterna el estado del icono escuchar una canción en bucle
-function toggleLoop() {
-  isLooping = !isLooping; // Alterna el estado
-
-  // Cambiar el ícono o estilo del botón según el estado del bucle
-  if (isLooping) {
-    loopButtonIcon.classList.add('active'); // Clase CSS opcional para indicar activación
-    loopButtonIcon.style.color = 'var(--color-primary)'; // Ejemplo de cambio visual
-    if (isShuffle) {
-      isShuffle = false; // Desactiva el estado de shuffle
-      const shuffleButtonIcon = document.querySelector('#shuffle-button i');
-      shuffleButtonIcon.classList.remove('active');
-      shuffleButtonIcon.style.color = ''; // Restaurar estilo del botón shuffle
-    }
-  } else {
-    loopButtonIcon.classList.remove('active');
-    loopButtonIcon.style.color = ''; // Restaurar color original
-  }
-}
-
-// Alterna el estado del icono al usar el modo aleatorio
-function toggleShuffle() {
-  isShuffle = !isShuffle; // Alterna el estado
-
-  // Cambiar el estilo del botón según el estado
-  if (isShuffle) {
-    shuffleButtonIcon.classList.add('active');
-    shuffleButtonIcon.style.color = 'var(--color-primary)'; // Cambio visual al activar
-    // Desactivar el loop si estaba activo
-    if (isLooping) {
-      isLooping = false; // Desactiva el estado de loop
-      const loopButtonIcon = document.querySelector('#loop-button i');
-      loopButtonIcon.classList.remove('active');
-      loopButtonIcon.style.color = ''; // Restaurar estilo del botón loop
-    }
-  } else {
-    shuffleButtonIcon.classList.remove('active');
-    shuffleButtonIcon.style.color = ''; // Restaurar estilo original
-  }
-}
-
-// Evento que detecta si se ha pulsado el botón de favoritos
-favsButton.addEventListener("click", () => {
-  loadFavorites();
-});
-
-// Función que carga las canciones favoritas en la lista de favoritos y en el DOM
-function loadFavorites() {
-  // Limpiar el contenedor antes de cargar
-  songsContainer.innerHTML = "";
-
-  // Añadir una clase especial al contenedor para identificar la vista de favoritos
-  songsContainer.classList.add('favorites-view');
-
-  // Cargar favoritos desde LocalStorage
-  favorites = JSON.parse(localStorage.getItem('favorites')) || []; // Aseguramos que favorites esté actualizado
-
-  // Comprobar si existen canciones favoritas
-  if (favorites.length === 0) {
-    songsContainer.innerHTML = "<p>No tienes canciones favoritas.</p>";
-    return;
-  }
-
-  // Crear un item para cada canción favorita
-  favorites.forEach(song => {
-    const songItem = createSongItem(song);
-    songsContainer.appendChild(songItem);
-  });
-}
-
-// Evento que controla la selección del botón "Todos" en el filtro
-allSongsButton.addEventListener('click', () => {
-  loadAllSongs();
-})
-
-// Carga todas las canciones en caso de seleccionar "Todos" en el filtro
-function loadAllSongs() {
-  songsContainer.innerHTML = ""; // Limpia el contenedor
-  if(songsContainer.classList.contains('favorites-view')){
-    songsContainer.classList.remove('favorites-view'); // Elimina la clase de favoritos
-  }
-
-  // Carga todas las canciones en el DOM
-  songsList.forEach(song => {
-    const songItem = createSongItem(song);
-    songsContainer.appendChild(songItem);
-  });
-}
 
