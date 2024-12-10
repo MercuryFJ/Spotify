@@ -13,26 +13,41 @@ const uploadButton = document.getElementById("upload-button");
 const songsContainer = document.getElementById('songs-container');
 const loopButtonIcon = document.querySelector('#loop-button i');
 const shuffleButtonIcon = document.querySelector('#shuffle-button i');
+const nextSongButton = document.getElementById('next-song-button');
+const previousSongButton = document.getElementById('previous-song-button');
+const loopButton = document.getElementById('loop-button');
+const shuffleButton = document.getElementById('shuffle-button');
+const volumeRange = document.getElementById("volume");
+const volumenContainer = document.querySelector(".volume-controls");
+const favsButton = document.getElementById("favs-button");
+const allSongsButton = document.getElementById("all-button");
+const closeFormButton = document.getElementById("close-button");
+const modalErrorMsg = document.querySelectorAll('.error-message');
+const errorTitleMsg = document.getElementById('error-title');
+const errorArtistMsg = document.getElementById('error-artist');
+const errorCoverMsg = document.getElementById('error-cover');
+const errorFileMsg = document.getElementById('error-file');
 
-// Songs API endpoint
+// API 
 const API = "http://informatica.iesalbarregas.com:7007";
-const songsEndPoint = API + "/songs";
-const uploadEndPoint = API + "/upload";
+const songsEndPoint = API + "/songs"; // EndPoint para recoger las canciones de la API
+const uploadEndPoint = API + "/upload"; // EndPoint para cargar las canciones en la API
 
 // Options for the fetch request
 const options = {
   method: 'GET'
 };
 
-// State variables
-let currentSong = null;
-let currentAudio = null;
-let isPlaying = false;
+// Variables
+let currentSong = null; // Canción actual
+let currentSongItem = null; // Variable global para almacenar el elemento de la canción actual
+let currentAudio = null; // Variable para saber si se está reproduciendo un audio
+let isPlaying = false; // Estado de reproducción
 let songsList = []; // Almacena todas las canciones de la API
 let currentSongIndex = 0; // Índice de la canción actual
 let isLooping = false; // Estado inicial del bucle (desactivado)
 let isShuffle = false; // Estado inicial del modo aleatorio (desactivado)
-let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+let favorites = JSON.parse(localStorage.getItem('favorites')) || []; // Array de canciones favoritas
 
 // Fetch songs
 // Hacemos el GET de la API, sacamos los datos con el fetch
@@ -46,16 +61,16 @@ fetch(songsEndPoint, options)
   })
   .then(songs => {
     songsList = songs;
-    // Populate song list
+    // Carga la lista de canciones y las muestra en el DOM
     songs.forEach(song => {
       const songItem = createSongItem(song);
       songsContainer.appendChild(songItem);
     });
 
-    document.getElementById('next-song-button').addEventListener('click', playNextSong);
-    document.getElementById('previous-song-button').addEventListener('click', playPreviousSong);
-    document.getElementById('loop-button').addEventListener('click', toggleLoop);
-    document.getElementById('shuffle-button').addEventListener('click', toggleShuffle);
+    nextSongButton.addEventListener('click', playNextSong); // Controla el evento de pasar a la siguiente canción
+    previousSongButton.addEventListener('click', playPreviousSong); // Controla el evento de volver a la canción anterior
+    loopButton.addEventListener('click', toggleLoop); // Controla el evento de repetir la canción en reproducción
+    shuffleButton.addEventListener('click', toggleShuffle); // Controla el evento de la escucha de manera aleatoria
 
     // Play button event listener
     playButton.addEventListener('click', () => {
@@ -76,20 +91,24 @@ fetch(songsEndPoint, options)
   });
 
 function createSongItem(song) {
+  // Añadimos al DOM el contenedor de la canción
   const songItem = document.createElement('div');
   songItem.classList.add('song-item');
 
+  // Añadimos al DOM el icono de play de la canción
   const playSongButton = document.createElement('span');
   playSongButton.classList.add("play-song-button");
   playSongButton.innerHTML = `<i class="bx bx-play play-icon"></i>`;
-  //playSongButton.firstElementChild.style.display = "none";
 
+  // Añadimos al DOM el título de la canción
   const title = document.createElement('span');
   title.textContent = song.title;
 
+  // Añadimos al DOM el artista de la canción
   const artist = document.createElement('span');
   artist.textContent = song.artist;
 
+  // Añadimos al DOM la duración de la canción
   const duration = document.createElement('span');
   const audio = new Audio(song.filepath);
   audio.addEventListener('loadedmetadata', () => {
@@ -98,8 +117,10 @@ function createSongItem(song) {
     duration.textContent = `${minutes}:${seconds}`;
   });
 
+  // Añadimos al DOM el botón de favoritos
   const favButton = document.createElement('button');
   favButton.classList.add("fav-button");
+
   // Verificar si la canción ya es favorita al cargar
   if (favorites.some(fav => fav.filepath === song.filepath)) {
     favButton.innerHTML = `<i class='bx bxs-heart'></i>`; // Corazón lleno si ya es favorita
@@ -113,7 +134,7 @@ function createSongItem(song) {
   // Manejo del botón de favoritos
   favButton.addEventListener('click', (e) => {
     e.stopPropagation();
-    if (favButton.firstChild.classList.contains("bx-heart")) {
+    if (favButton.firstChild.classList.contains("bx-heart")) { //El primer hijo es la etiqueta <i>
       // Si no es favorita, añadir a favoritos
       favButton.innerHTML = `<i class='bx bxs-heart'></i>`;
       favorites.push(song); // Añadir la canción a la lista de favoritos
@@ -137,16 +158,15 @@ function createSongItem(song) {
     }
   });
 
+  // Manejar el evento de clic en el item de la canción
   songItem.addEventListener('click', () => {
-    console.log(songItem)
     selectSong(song);
   });
 
   return songItem;
 }
 
-let currentSongItem = null; // Variable global para almacenar el elemento de la canción actual
-
+// Función para seleccionar una canción
 function selectSong(song) {
   // Comprobar si estamos en la vista de favoritos
   if (songsContainer.classList.contains('favorites-view')) {
@@ -156,14 +176,14 @@ function selectSong(song) {
     }
   }
 
-  // Actualizar currentSongIndex según la vista actual
+  // Actualizar el indice del array de canciones según la lista que estemos visualizando.
   if (songsContainer.classList.contains('favorites-view')) {
     currentSongIndex = favorites.findIndex(s => s.filepath === song.filepath);
   } else {
     currentSongIndex = songsList.findIndex(s => s.filepath === song.filepath);
   }
 
-  // Si hay un audio en reproducción, pausarlo y reiniciarlo
+  // Si hay un audio en reproducción, lo pausa y lo reinicia
   if (currentAudio) {
     currentAudio.pause();
     currentAudio = null;
@@ -178,22 +198,24 @@ function selectSong(song) {
   `;
   const musicData = document.querySelector('#music-data');
   musicData.innerHTML = `
-    <div class="song-name">${song.title}</div>
-    <div class="artist-name">${song.artist}</div>
+    <div class="song-name"><span>${song.title}</span></div>
+    <div class="artist-name"><span>${song.artist}</span></div>
   `;
 
   // Restablecer el estado de reproducción
   isPlaying = false;
   updatePlayPauseButton(false);
 
-  // Quitar la clase active de cualquier otra canción
+  // Quita la clase active de cualquier otra canción para que no haya dos marcadas a la vez
   const activeSongs = document.querySelectorAll('.song-item-active');
   activeSongs.forEach(song => song.classList.remove('song-item-active'));
 
+  //Permite que la canción seleccionada esté marcada mientras se reproduce
   currentSongItem = document.querySelector(`.song-item:nth-child(${currentSongIndex + 1})`);
   playSong(song.filepath);
 }
 
+// Función que alterna entre el Play y el Pause 
 function togglePlayPause() {
   if (!currentSong) return;
 
@@ -213,7 +235,9 @@ function togglePlayPause() {
   }
 }
 
+// Reproduce la canción que corresponda según la situación en la que se encuentre el reproductor
 function playSong(songUrl) {
+  // Para la canción actual en reproducción para poder reproducir la siguiente y que no se solapen
   if (currentAudio) {
     currentAudio.pause();
   }
@@ -224,12 +248,13 @@ function playSong(songUrl) {
     totalTime.textContent = formatTime(currentAudio.duration);
   });
 
+  // Reproduce la canción al volumen adecuado
   currentAudio.play();
   currentAudio.volume = volumeRange.value;
   isPlaying = true;
   updatePlayPauseButton(true);
 
-  // Add event listener to handle when song ends
+  // Agregar un event listener para cuando la canción termine
   currentAudio.addEventListener('ended', () => {
     if (isLooping) {
       currentAudio.currentTime = 0; // Reinicia la canción actual
@@ -241,8 +266,10 @@ function playSong(songUrl) {
     }
   });
 
+  // Este evento actualiza el valor de la progress bar según la duración de la canción
   currentAudio.addEventListener('timeupdate', () => {
     const progress = (currentAudio.currentTime / currentAudio.duration) * 100;
+    // Controlamos en caso de que la duración no se haya cargado.
     if (!Number.isNaN(progress)) {
       progressBar.value = progress;
     }
@@ -264,6 +291,7 @@ function playSong(songUrl) {
   }
 }
 
+// Esta función actualiza el contenido de los iconos de reproducción
 function updatePlayPauseButton(playing) {
   const playButtonIcon = playButton.querySelector('i');
   if (playing) {
@@ -286,14 +314,17 @@ function formatTime(seconds) {
 
 // Event listener para la barra de progreso
 progressBar.addEventListener('mousedown', (e) => {
+  // Se obtiene la posición y tamaño del elemento progressBar en la ventana del navegador.
   const rect = progressBar.getBoundingClientRect();
+  // Se calcula la posición X del clic del ratón en relación con el inicio de la barra de progreso.
   const clickX = e.clientX - rect.left;
+  // Se calcula el porcentaje de progreso que representa la posición del clic en la barra.
   const progress = (clickX / rect.width) * 100;
   progressBar.value = progress;
   updateCurrentTime(progress);
 
   if (currentAudio != null) {
-    // Mover la canción a la nueva posición
+    // Se actualiza el tiempo actual de reproducción del audio
     currentAudio.currentTime = (progress / 100) * currentAudio.duration;
   }
   // Event listener para cuando se mueve el ratón mientras se mantiene presionado el botón
@@ -307,6 +338,7 @@ progressBar.addEventListener('mousedown', (e) => {
     }
   }
 
+  // Se elimina el event listener de mousemove para que la barra de progreso deje de actualizarse cuando el usuario deja de arrastrar el ratón.
   window.addEventListener('mousemove', handleMouseMove);
 
   // Event listener para cuando se suelta el botón del ratón
@@ -323,11 +355,13 @@ function updateCurrentTime(progress) {
   }
 }
 
+// Evento que permite mostrar el modal
 addQueueButton.addEventListener('click', () => {
   modalContainer.classList.replace("hidden", "modal-container");
-  document.querySelectorAll('.error-message').forEach(span => span.textContent = '');
+  modalErrorMsg.forEach(span => span.textContent = '');
 })
 
+// Este evento controla si el usuario pulsa fuera de la pantalla, al estar desplegado el modal, este se cierra.
 window.onclick = function (event) {
   if (event.target == modalContainer) {
     modalContainer.classList.replace("modal-container", "hidden");
@@ -335,34 +369,34 @@ window.onclick = function (event) {
   }
 }
 
-const closeFormButton = document.getElementById("close-button");
 closeFormButton.addEventListener('click', () => {
   closeModal();
 })
 
 // Función para cerrar el modal
 function closeModal() {
-  document.querySelectorAll('.error-message').forEach(span => span.textContent = '');
   modalContainer.classList.add('hidden');
   clearForm();
 }
 
+// Función para limpiar el formulario en caso de añadir o no una canción
 function clearForm() {
   addQueueForm.reset();
-  document.querySelectorAll('.error-message').forEach(span => span.textContent = '');
+  modalErrorMsg.forEach(span => span.textContent = '');
 }
 
 // Manejar el evento de envío del formulario
 addQueueForm.addEventListener("submit", function (e) {
   e.preventDefault(); // Evitar la recarga de la página al enviar el formulario
 
-  // Validaciones
+  // Validaciones de los campos del formulario
   const title = document.getElementById('song-title');
   const artist = document.getElementById('song-artist');
   const file = document.getElementById('song-file');
   const cover = document.getElementById('song-image');
   let isValid = true;
 
+  // Permite que se visualice el nombre del archivo al subirlo
   file.addEventListener('change', () => {
     file.style.color = "black";
   })
@@ -370,28 +404,33 @@ addQueueForm.addEventListener("submit", function (e) {
   const regex = /^[A-Za-z\s]{1,20}$/;
 
   // Limpiar mensajes de error
-  document.querySelectorAll('.error-message').forEach(span => span.textContent = '');
+  modalErrorMsg.forEach(span => span.textContent = '');
 
+  // Valida si se cumple el regex en el titulo de la canción
   if (!regex.test(title.value)) {
     isValid = false;
-    document.getElementById('error-title').textContent = 'El campo está vacío o contiene caracteres no válidos.';
+    errorTitleMsg.textContent = 'El campo está vacío o contiene caracteres no válidos.';
   }
 
+  // Valida si se cumple el regex en el artista de la canción
   if (!regex.test(artist.value)) {
     isValid = false;
-    document.getElementById('error-artist').textContent = 'El campo está vacío o contiene caracteres no válidos.';
+    errorArtistMsg.textContent = 'El campo está vacío o contiene caracteres no válidos.';
   }
 
+  // Controla si se ha subido el archivo de la canción
   if (!file.files.length) {
     isValid = false;
-    document.getElementById('error-file').textContent = 'Debes seleccionar un archivo de audio.';
+    errorFileMsg.textContent = 'Debes seleccionar un archivo de audio.';
   }
 
+  // Controla si se ha subido la imagen de la canción
   if (!cover.files.length) {
     isValid = false;
-    document.getElementById('error-cover').textContent = 'Debes seleccionar una portada.';
+    errorCoverMsg.textContent = 'Debes seleccionar una portada.';
   }
 
+  // Si alguno de los campos no fuera válido no se efectuaría el POST
   if (!isValid) return;
 
   // Crear un objeto FormData para capturar los datos del formulario
@@ -413,19 +452,12 @@ addQueueForm.addEventListener("submit", function (e) {
       }
     })
     .then(data => {
-      console.log("Música subida con éxito:", data);
-
-      addQueueForm.reset();
-      document.querySelectorAll('.error-message').forEach(span => span.textContent = '');
-      // Cerrar el modal
-      modalContainer.classList.replace("modal-container", "hidden");
-
       // Actualizar el arreglo de canciones en memoria
       songsList.push(data);
-
       // Crear un nuevo elemento de canción y añadirlo al DOM
       const newSongItem = createSongItem(data.result);
       songsContainer.appendChild(newSongItem);
+      closeModal()
     })
     .catch(error => {
       console.error(error.message);
@@ -433,8 +465,7 @@ addQueueForm.addEventListener("submit", function (e) {
     });
 });
 
-const volumeRange = document.getElementById("volume");
-const volumenContainer = document.querySelector(".volume-controls");
+// Este evento controla el icono del volumen según el valor del type range
 volumeRange.addEventListener('input', (e) => {
   if (currentAudio != null) {
     currentAudio.volume = e.target.value;
@@ -456,11 +487,13 @@ volumeRange.addEventListener('input', (e) => {
   }
 })
 
+// Permite que se visualice el valor del volumen en la barra del input type=range
 volumeRange.addEventListener('input', function () {
   const value = (this.value - this.min) / (this.max - this.min) * 100;
   this.style.setProperty('--range-progress', `${value}%`);
 });
 
+// Reproduce la siguiente canción en caso de seleccionar el icono de next-song
 function playNextSong() {
   if (isLooping) {
     // Si está activo el loop, reinicia la canción actual y no cambia
@@ -489,6 +522,8 @@ function playNextSong() {
     }
   }
 }
+
+// Reproduce la canción anterior en caso de seleccionar el icono de previous-song
 function playPreviousSong() {
   if (isLooping) {
     // Si está activo el loop, reinicia la canción actual y no cambia
@@ -518,6 +553,7 @@ function playPreviousSong() {
   }
 }
 
+// Reproduce una canción aleatoria en caso de estar en la vista de favoritos y estar activado el modo aleatorio
 function playRandomFavSong() {
   if (!favorites.length) return; // Si no hay favoritos, salir
 
@@ -530,6 +566,20 @@ function playRandomFavSong() {
   selectSong(randomSong);
 }
 
+// Reproduce una canción aleatoria en caso de estar en la vista de todas las canciones y estar activado el modo aleatorio
+function playRandomSong() {
+  if (!songsList.length) return; // Si no hay canciones, salir
+
+  let randomIndex;
+  do {
+    randomIndex = Math.floor(Math.random() * songsList.length); // Genera un índice aleatorio
+  } while (songsList[randomIndex].filepath === currentSong.filepath); // Verifica que no sea la misma canción
+
+  const randomSong = songsList[randomIndex];
+  selectSong(randomSong); // Reproduce la canción aleatoria
+}
+
+// Alterna el estado del icono escuchar una canción en bucle
 function toggleLoop() {
   isLooping = !isLooping; // Alterna el estado
 
@@ -549,6 +599,7 @@ function toggleLoop() {
   }
 }
 
+// Alterna el estado del icono al usar el modo aleatorio
 function toggleShuffle() {
   isShuffle = !isShuffle; // Alterna el estado
 
@@ -569,24 +620,12 @@ function toggleShuffle() {
   }
 }
 
-function playRandomSong() {
-  if (!songsList.length) return; // Si no hay canciones, salir
-
-  let randomIndex;
-  do {
-    randomIndex = Math.floor(Math.random() * songsList.length); // Genera un índice aleatorio
-  } while (songsList[randomIndex].filepath === currentSong.filepath); // Verifica que no sea la misma canción
-
-  const randomSong = songsList[randomIndex];
-  selectSong(randomSong); // Reproduce la canción aleatoria
-}
-
-const favsButton = document.getElementById("favs-button");
-
+// Evento que detecta si se ha pulsado el botón de favoritos
 favsButton.addEventListener("click", () => {
   loadFavorites();
 });
 
+// Función que carga las canciones favoritas en la lista de favoritos y en el DOM
 function loadFavorites() {
   // Limpiar el contenedor antes de cargar
   songsContainer.innerHTML = "";
@@ -597,6 +636,7 @@ function loadFavorites() {
   // Cargar favoritos desde LocalStorage
   favorites = JSON.parse(localStorage.getItem('favorites')) || []; // Aseguramos que favorites esté actualizado
 
+  // Comprobar si existen canciones favoritas
   if (favorites.length === 0) {
     songsContainer.innerHTML = "<p>No tienes canciones favoritas.</p>";
     return;
@@ -609,15 +649,19 @@ function loadFavorites() {
   });
 }
 
-const allSongsButton = document.getElementById("all-button");
+// Evento que controla la selección del botón "Todos" en el filtro
 allSongsButton.addEventListener('click', () => {
   loadAllSongs();
 })
 
+// Carga todas las canciones en caso de seleccionar "Todos" en el filtro
 function loadAllSongs() {
   songsContainer.innerHTML = ""; // Limpia el contenedor
-  songsContainer.classList.remove('favorites-view'); // Elimina la clase de favoritos
+  if(songsContainer.classList.contains('favorites-view')){
+    songsContainer.classList.remove('favorites-view'); // Elimina la clase de favoritos
+  }
 
+  // Carga todas las canciones en el DOM
   songsList.forEach(song => {
     const songItem = createSongItem(song);
     songsContainer.appendChild(songItem);
