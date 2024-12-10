@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <script type="module" src="./src/js/index.js" defer></script>
+  <link rel="stylesheet" href="./src/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="icon" href="src/images/spotify_ico.png" type="image/x-icon">
+  <title>Spotify</title>
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div>
+        <div class="window-controls">
+          <div class="control-dot"></div>
+          <div class="control-dot"></div>
+          <div class="control-dot"></div>
+        </div>
+        <div class="filtros-container">
+          <details>
+            <summary>Filtros</summary>
+            <p id="all-button">Todos</p>
+            <p id="favs-button">Favoritos</p>
+          </details>
+        </div>
+      </div>
+      <div class="currentMusic"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="top-bar">
+        <div class="search-container">
+          <i class='bx bx-search-alt'></i>
+          <input type="search" class="search-bar" placeholder="Search" id="search" name="search">
+        </div>
+        <div>
+          <div id="user"><img id="imgUser" src="./src/images/perfil.png" alt="Usuario">Alejandro</div>
+        </div>
+      </div>
+
+      <div class="user-controls">
+        <h1>Music</h1>
+        <div id="modal-user-controls-container">
+          <button id="play-pause-button" class="green-button">PAUSE</button>
+          <button id="add-to-queue" class="control-button"><i class='bx bxs-add-to-queue'></i></button>
+          <div id="modal-container" class="hidden">
+            <form id="add-to-queue-form" method="post">
+              <button id="close-button"><i class='bx bx-x'></i></button>
+              <div>
+                <label for="song-file">Añadir nueva canción</label>
+                <input type="file" accept=".mp3" id="song-file" name="music">
+                <span id="error-file" class="error-message"></span>
+              </div>
+              <div>
+                <label for="song-title">Título</label>
+                <input type="text" name="title" id="song-title" maxlength="20">
+                <span id="error-title" class="error-message"></span>
+              </div>
+              <div>
+                <label for="song-artist">Autor</label>
+                <input type="text" name="artist" id="song-artist" maxlength="20">
+                <span id="error-artist" class="error-message"></span>
+              </div>
+              <div>
+                <label for="song-image">Imagen de portada</label>
+                <input type="file" accept=".png, .jpg" id="song-image" name="cover">
+                <span id="error-cover" class="error-message"></span>
+              </div>
+              <input type="submit" value="Subir" id="upload-button" name="upload-button" class="green-button">
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div id="song-list-container">
+        <div class="songs-header">
+          <span></span>
+          <span>TÍTULO</span>
+          <span>ARTISTA</span>
+          <span><i class='bx bx-time-five'></i></span>
+          <span></span>
+        </div>
+        <div id="songs-container"></div>
+      </div>
+    </div>
+
+    <!-- Player -->
+    <div class="player">
+      <div class="player-content">
+        <div class="current-song">
+          <div id="music-data" class="song-info">
+            <div class="song-name">Canción actual</div>
+            <div class="artist-name">Artista</div>
+          </div>
+        </div>
+
+        <div class="center-controls">
+          <div class="player-controls">
+            <button id="loop-button" class="control-button"><i class='bx bx-repeat'></i></button>
+            <button id="previous-song-button" class="control-button"><i class='bx bx-skip-previous'></i></button>
+            <button class="control-button play-button"><i class='bx bx-play-circle'></i></button>
+            <button id="next-song-button" class="control-button"><i class='bx bx-skip-next'></i></button>
+            <button id="shuffle-button" class="control-button"><i class='bx bx-shuffle'></i></button>
+          </div>
+          <div class="progress-container">
+            <span class="time current">0:00</span>
+            <progress class="progress-bar" value="0" max="100"></progress>
+            <span class="time total">0:00</span>
+          </div>
+        </div>
+
+        <div class="volume-controls">
+          <i class='bx bxs-volume-low'></i>
+          <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5" class="volume-bar">
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
