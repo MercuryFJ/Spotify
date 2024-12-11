@@ -248,14 +248,12 @@ function playSong(songUrl) {
   if (currentSongItem) {
     currentSongItem.classList.add('song-item-active');
     currentAudio.addEventListener('ended', () => {
-      // Quitar la clase active cuando la canción termine
-      if (currentSongItem) {
-        currentSongItem.classList.remove('song-item-active');
-      }
       if (isLooping) {
+        currentSongItem.classList.add('song-item-active');
         currentAudio.currentTime = 0; // Reinicia la canción actual
         currentAudio.play();
       } else if (isShuffle) {
+        currentSongItem.classList.remove('song-item-active');
         if (songsContainer.classList.contains('favorites-view')) {
           playRandomSong(favorites); // Reproduce una canción aleatoria en favoritos
         } else {
@@ -379,10 +377,9 @@ function toggleLoop() {
   // Cambiar el ícono o estilo del botón según el estado del bucle
   if (isLooping) {
     loopButtonIcon.classList.add('active'); // Clase CSS opcional para indicar activación
-    loopButtonIcon.style.color = 'var(--color-primary)'; // Ejemplo de cambio visual
+    loopButtonIcon.style.color = 'var(--primary-color)'; // Ejemplo de cambio visual
     if (isShuffle) {
       isShuffle = false; // Desactiva el estado de shuffle
-      const shuffleButtonIcon = document.querySelector('#shuffle-button i');
       shuffleButtonIcon.classList.remove('active');
       shuffleButtonIcon.style.color = ''; // Restaurar estilo del botón shuffle
     }
@@ -399,11 +396,10 @@ function toggleShuffle() {
   // Cambiar el estilo del botón según el estado
   if (isShuffle) {
     shuffleButtonIcon.classList.add('active');
-    shuffleButtonIcon.style.color = 'var(--color-primary)'; // Cambio visual al activar
+    shuffleButtonIcon.style.color = 'var(--primary-color)'; // Cambio visual al activar
     // Desactivar el loop si estaba activo
     if (isLooping) {
       isLooping = false; // Desactiva el estado de loop
-      const loopButtonIcon = document.querySelector('#loop-button i');
       loopButtonIcon.classList.remove('active');
       loopButtonIcon.style.color = ''; // Restaurar estilo del botón loop
     }
@@ -476,8 +472,6 @@ function loadFavorites() {
     songsContainer.appendChild(songItem);
   });
 }
-
-
 
 // --- PROGRESS BAR ---
 // Event listener para la barra de progreso
