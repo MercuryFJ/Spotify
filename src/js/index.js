@@ -1,4 +1,4 @@
-// Selecting DOM elements
+// Selecting DOM elements and constants
 const songList = document.querySelector('.main-content');
 const currentMusic = document.querySelector('.currentMusic');
 const playButton = document.querySelector('.play-button');
@@ -22,6 +22,10 @@ const volumenContainer = document.querySelector(".volume-controls");
 const favsButton = document.getElementById("favs-button");
 const allSongsButton = document.getElementById("all-button");
 const closeFormButton = document.getElementById("close-button");
+const title = document.getElementById('song-title');
+const artist = document.getElementById('song-artist');
+const file = document.getElementById('song-file');
+const cover = document.getElementById('song-image');
 const modalErrorMsg = document.querySelectorAll('.error-message');
 const errorTitleMsg = document.getElementById('error-title');
 const errorArtistMsg = document.getElementById('error-artist');
@@ -586,24 +590,30 @@ function closeModal() {
 function clearForm() {
   addQueueForm.reset();
   modalErrorMsg.forEach(span => span.textContent = '');
+  file.style.color = "#f5f5f5";
+  cover.style.color = "#f5f5f5";
 }
+
+// Permite que se visualice el nombre del archivo al subirlo
+file.addEventListener('change', () => {
+  if (file.files.length > 0) {
+    file.style.color = "black";
+  }
+})
+
+// Permite que se visualice el nombre de la foto al subirlo
+cover.addEventListener('change', () => {
+  if (cover.files.length > 0) {
+    cover.style.color = "black";
+  }
+})
 
 // Manejar el evento de envío del formulario
 addQueueForm.addEventListener("submit", function (e) {
   e.preventDefault(); // Evitar la recarga de la página al enviar el formulario
 
   // Validaciones de los campos del formulario
-  const title = document.getElementById('song-title');
-  const artist = document.getElementById('song-artist');
-  const file = document.getElementById('song-file');
-  const cover = document.getElementById('song-image');
   let isValid = true;
-
-  // Permite que se visualice el nombre del archivo al subirlo
-  file.addEventListener('change', () => {
-    file.style.color = "black";
-  })
-
   const regex = /^[A-Za-z\s]{1,20}$/;
 
   // Limpiar mensajes de error
