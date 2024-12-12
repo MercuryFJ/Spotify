@@ -1,14 +1,15 @@
 :root {
   --primary-color: #1db954;
   --color-background: #3e3e3e;
-  --color-surface: #282828;
   --color-text: #ffffff;
   --color-text-secondary: #a8a8a8;
   --color-dark: #171717;
-  --secondary-color: ;
-  --accent-color: ;
-  --light-color: ;
-  --dark-color: ;
+  --light-color: #f5f5f5;
+  --border-light-color: #e1e1e1;
+  --secondary-color-background: #3c3c3c;
+  --button-red: #ff5f57;
+  --button-yellow:#ffbd2e;
+  --button-green: #28c940;
 }
 
 * {
@@ -42,7 +43,7 @@
   gap: 20px;
   height: 550px;
   width: 85vw;
-  background-color: #f5f5f5;
+  background-color: var(--light-color);
   margin: 0 auto;
   border-radius: 10px;
   color: var(--color-dark);
@@ -65,16 +66,16 @@
 }
 
 #add-to-queue-form input[type='text'] {
-  border: 2px solid #e1e1e1;
+  border: 2px solid var(--border-light-color);
   width: 100%;
   padding: 8px;
   border-radius: 5px
 }
 
 #add-to-queue-form input[type='file'] {
-  border: 2px solid #e1e1e1;
+  border: 2px solid var(--border-light-color);
   width: 100%;
-  color: #f5f5f5;
+  color: var(--light-color);
   padding: 8px;
   border-radius: 5px
 }
@@ -261,7 +262,7 @@
 }
 
 .player {
-  background-color: #3c3c3c;
+  background-color: var(--secondary-color-background);
   padding: 0px 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   width: 100%;
@@ -300,7 +301,7 @@
 }
 
 .song-item-active {
-  background-color: #3c3c3c;
+  background-color: var(--secondary-color-background);
 }
 
 .song-info {
