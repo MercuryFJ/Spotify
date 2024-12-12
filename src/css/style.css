@@ -40,7 +40,7 @@
   align-items: center;
   flex-direction: column;
   gap: 20px;
-  height: 60vh;
+  height: 550px;
   width: 85vw;
   background-color: #f5f5f5;
   margin: 0 auto;
@@ -487,6 +487,14 @@ h1 {
   font-weight: bold;
 }
 
+span {
+  text-shadow: 2px 2px 1px black;
+}
+
+i {
+  text-shadow: initial;
+}
+
 details {
   padding: 4px;
   color: var(--color-text-secondary);
@@ -526,4 +534,176 @@ details p:hover {
 
 /* --- DISEÑO RESPONSIVE --- */
 
+/* Móvil pequeño */
+@media (max-width: 360px) {
 
+  .app-container {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .top-bar {
+    display: none;
+  }
+
+  .user-controls {
+    display: none;
+  }
+
+  .main-content {
+    height: 40%;
+  }
+
+  .volume-controls {
+    display: none;
+  }
+
+  .sidebar {
+    justify-content: flex-start;
+    width: 100%;
+    height: 40%;
+  }
+
+  .currentMusic {
+    align-self: flex-start;
+    height: 63%;
+  }
+
+  .player {
+    height: 15%;
+  }
+
+  .player-content {
+    flex-direction: column;
+  }
+
+  .song-info {
+    padding: 0px;
+    width: 100%;
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .song-item {
+    grid-template-columns: 1fr 4fr 4fr 2fr 2fr;
+    font-size: 13px;
+  }
+
+  .songs-header {
+    grid-template-columns: 1fr 4fr 4fr 2fr 2fr;
+    font-size: 14px;
+  }
+
+  .artist-name {
+    font-size: 16px;
+  }
+
+  #song-list-container {
+    height: 100%;
+  }
+
+  .current-song {
+    width: 100%;
+  }
+
+  .center-controls {
+    width: 70%;
+  }
+
+  .time {
+    text-align: center;
+  }
+
+  .play-button {
+    font-size: 36px;
+  }
+}
+
+/* Movil grande */
+@media (min-width: 367px) and (max-width: 1439px) {
+  .app-container {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .top-bar {
+    display: none;
+  }
+
+  .user-controls {
+    display: none;
+  }
+
+  .main-content {
+    height: 40%;
+  }
+
+  .volume-controls {
+    display: none;
+  }
+
+  .sidebar {
+    justify-content: flex-start;
+    width: 100%;
+    height: 40%;
+  }
+
+  .currentMusic {
+    align-self: flex-start;
+    height: 74%;
+  }
+
+  .player {
+    height: 15%;
+  }
+
+  .player-content {
+    flex-direction: column;
+  }
+
+  .song-info {
+    padding: 0px;
+    width: 100%;
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .song-item {
+    grid-template-columns: 1fr 4fr 4fr 2fr 2fr;
+    font-size: 14px;
+  }
+
+  .songs-header {
+    grid-template-columns: 1fr 4fr 4fr 2fr 2fr;
+  }
+
+  #song-list-container {
+    height: 100%;
+  }
+
+  .current-song {
+    width: 100%;
+    height: 25%;
+  }
+
+  .center-controls {
+    width: 70%;
+    justify-content: center;
+  }
+
+  .time {
+    text-align: center;
+  }
+
+  .play-button {
+    font-size: 48px;
+  }
+
+  .song-name, .artist-name{
+    font-size: 16px;
+  }
+}
