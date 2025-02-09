@@ -19,14 +19,35 @@
       <div>
         <div class="window-controls">
           <div class="control-dot"></div>
-          <div class="control-dot"></div>
-          <div class="control-dot"></div>
+          <div class="control-dot">
+            <div id="container-user-change-form" class="hidden">
+              <form method="post" id="form-change-username">
+                <label for="change-username">Introduce un nuevo nombre de usuario:</label>
+                <select id="change-username" name="change-username" required>
+                  <option disabled selected>-Elige una opción-</option>
+                </select>
+                <input type="submit" value="Enviar">
+              </form>
+            </div>
+          </div>
+          <div class="control-dot">
+            <div id="container-user-form" class="hidden">
+              <form method="post" id="form-new-username">
+                <label for="new-username">Introduce un nuevo nombre de usuario:</label>
+                <input type="text" name="new-username" id="new-username" maxlength="10">
+                <span id="error-new-username" class="error-message"></span>
+                <input type="submit" value="Enviar">
+              </form>
+            </div>
+          </div>
         </div>
         <div class="filtros-container">
           <details>
             <summary>Filtros</summary>
             <p id="all-button">Todos</p>
             <p id="favs-button">Favoritos</p>
+            <p id="short-songs">Canciones cortas</p>
+            <p id="long-songs">Canciones largas</p>
           </details>
         </div>
       </div>
@@ -41,7 +62,9 @@
           <input type="search" class="search-bar" placeholder="Search" id="search" name="search">
         </div>
         <div>
-          <div id="user"><img id="imgUser" src="./src/images/perfil.png" alt="Usuario">Alejandro</div>
+          <div id="user"><img id="imgUser" src="./src/images/perfil.png" alt="Usuario">
+            <h1 id="username">Alejandro</h1>
+          </div>
         </div>
       </div>
 

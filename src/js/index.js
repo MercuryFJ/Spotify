@@ -33,7 +33,7 @@ const errorCoverMsg = document.getElementById('error-cover');
 const errorFileMsg = document.getElementById('error-file');
 
 // API 
-const API = "http://informatica.iesalbarregas.com:7007";
+const API = "http://informatica.iesalbarregas.com:7008";
 const songsEndPoint = API + "/songs"; // EndPoint para recoger las canciones de la API
 const uploadEndPoint = API + "/upload"; // EndPoint para cargar las canciones en la API
 
@@ -119,6 +119,9 @@ function createSongItem(song) {
   const duration = document.createElement('span');
   const audio = new Audio(song.filepath);
 
+  const deleteButton = document.createElement('button');
+  deleteButton.classList.add("delete-song");
+
   // Se mostrará la duración una vez hayan cargado los datos del archivo de audio
   audio.addEventListener('loadedmetadata', () => {
     const minutes = Math.floor(audio.duration / 60);
@@ -137,7 +140,7 @@ function createSongItem(song) {
     favButton.innerHTML = `<i class='bx bx-heart'></i>`; // Corazón vacío
   }
 
-  songItem.append(playSongButton, title, artist, duration, favButton);
+  songItem.append(playSongButton, title, artist, duration, favButton, deleteButton);
   songsContainer.append(songItem);
 
   // Manejo del botón de favoritos
@@ -166,6 +169,12 @@ function createSongItem(song) {
       }
     }
   });
+
+  deleteButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const songItem = deleteButton.parentElement;
+    songsContainer.removeChild(songItem);
+  })
 
   // Manejar el evento de clic en el item de la canción
   songItem.addEventListener('click', () => {
@@ -672,6 +681,218 @@ addQueueForm.addEventListener("submit", function (e) {
     });
 });
 
+// --- CONTROL DE VENTANA ---
+// Selecciona el primer punto de la barra de título
+const closeWindow = document.querySelector('.control-dot:nth-child(1)');
+
+// Cierra la pestaña al hacer clic en el botón rojo
+closeWindow.addEventListener('click', () => {
+  alert("¿Estas seguro que quieres cerrar la ventana?");
+  window.close();
+});
+
+// --- MOFICACION BARRA DE BUSQUEDA ---
+const searchInput = document.querySelector('.search-bar');
+searchInput.addEventListener('input', () => {
+  if (searchInput.value.length > 1) {
+    filterSongs();
+  } else {
+    loadAllSongs();
+  }
+});
+function filterSongs() {
+  const searchTerm = searchInput.value.toLowerCase(); // Obtener el término de búsqueda en minúsculas
+  const filteredSongs = songsList.filter(song => song.title.toLowerCase().includes(searchTerm)); // Filtrar canciones
+  renderSongs(filteredSongs); // Renderizar las canciones filtradas en el DOM
+
+}
+
+function renderSongs(songs) {
+  songsContainer.innerHTML = ''; // Limpiar el contenedor de canciones
+  songs.forEach(song => { // Recorrer las canciones filtradas
+    const songItem = createSongItem(song); // Crear un elemento para cada canción
+    songsContainer.appendChild(songItem); // Agregar el elemento al contenedor
+  });
+}
+
+// --- CANCIONES POR ARTISTA ---
+const artistHeader = document.querySelector('.songs-header span:nth-child(3)');
+
+// Agrega un event listener para el clic en el título
+artistHeader.addEventListener('click', () => {
+  // Ordena las canciones por título
+  sortSongsByArtist();
+
+  // Limpia el contenedor de canciones
+  songsContainer.innerHTML = '';
+
+  // Vuelve a agregar las canciones ordenadas al DOM
+  if (songsContainer.classList.contains('favorites-view')) {
+    favorites.forEach(song => {
+      const songItem = createSongItem(song);
+      songsContainer.appendChild(songItem);
+    });
+  } else {
+    songsList.forEach(song => {
+      const songItem = createSongItem(song);
+      songsContainer.appendChild(songItem);
+    });
+  }
+});
+
+let flag = false;
+function sortSongsByArtist() {
+
+  if (songsContainer.classList.contains('favorites-view')) {
+    favorites.sort((a, b) => a.artist.localeCompare(b.artist));
+  } else {
+
+    if (flag) {
+      songsList.sort((b, a) => a.artist.localeCompare(b.artist))
+      flag = false;
+    } else {
+      songsList.sort((a, b) => a.artist.localeCompare(b.artist))
+      flag = true;
+    }
+  }
+}
+
+// --- Array en localStorage ---
+const userName = document.getElementById("username");
+const arrayUsers = [];
+arrayUsers.push("Alejandro");
+arrayUsers.push("Javier");
+
+localStorage.setItem('users', JSON.stringify(arrayUsers));
+
+function randomUser() {
+  return Math.floor(Math.random() * arrayUsers.length);
+}
+
+let users = JSON.parse(localStorage.getItem('users'));
+users = users.toString().split(",");
+userName.textContent = users[randomUser()];
+
+// --- Modal Botón verde ---
+const greenDot = document.querySelector('.control-dot:nth-child(3)');
+const formNewuser = document.getElementById('form-new-username');
+const containerUserForm = document.getElementById('container-user-form');
+
+greenDot.addEventListener('click', () => {
+  containerUserForm.classList.replace("hidden", "modal-container");
+})
+
+// Función para cerrar el modal
+function closeModalUser() {
+  containerUserForm.classList.add('hidden');
+  clearForm();
+}
+
+formNewuser.addEventListener("submit", function (e) {
+  e.preventDefault(); // Evitar la recarga de la página al enviar el formulario
+
+  // Validaciones de los campos del formulario
+  const regexUsername = /^[A-Z]{1}[a-z]{1,9}$/;
+
+  const newUserName = document.getElementById("new-username");
+  const errorNewUsername = document.getElementById("error-new-username");
+  // Valida si se cumple el regex en el titulo de la canción
+  console.log(newUserName.value);
+  if (!regexUsername.test(newUserName.value)) {
+    console.log("ERROR")
+    errorNewUsername.textContent = 'El campo está vacío o contiene caracteres no válidos.';
+    formNewuser.reset();
+    return;
+  }
+  arrayUsers.push(newUserName.value);
+  localStorage.setItem('users', JSON.stringify(arrayUsers));
+  closeModalUser();
+});
+
+// --- Modal botón amarillo
+
+const yellowDot = document.querySelector('.control-dot:nth-child(2)');
+const formChangeUser = document.getElementById('form-change-username');
+const containerUserChangeForm = document.getElementById('container-user-change-form');
+
+yellowDot.addEventListener('click', () => {
+  containerUserChangeForm.classList.replace("hidden", "modal-container");
+  const selectChangeUsername = document.getElementById("change-username");
+  selectChangeUsername.innerHTML = `<option disabled selected>-Elige una opción-</option>`
+  let listaUsuarios = JSON.parse(localStorage.getItem('users'));
+  listaUsuarios = listaUsuarios.toString().split(",");
+  listaUsuarios.forEach(user => {
+    const newOption = document.createElement("option");
+    newOption.value = user;
+    newOption.textContent = user;
+    selectChangeUsername.append(newOption);
+  });
+})
+
+// Este evento controla si el usuario pulsa fuera de la pantalla, al estar desplegado el modal, este se cierra.
+window.onclick = function (event) {
+  if (event.target == containerUserChangeForm) {
+    containerUserChangeForm.classList.replace("modal-container", "hidden");
+    closeModalChange();
+  }
+
+  if (event.target == containerUserForm) {
+    containerUserForm.classList.replace("modal-container", "hidden");
+    closeModalUser();
+  }
+
+  if (event.target == modalContainer) {
+    modalContainer.classList.replace("modal-container", "hidden");
+    closeModal();
+  }
+}
+
+// Función para cerrar el modal
+function closeModalChange() {
+  containerUserChangeForm.classList.add('hidden');
+  clearForm();
+}
+
+formChangeUser.addEventListener("submit", function (e) {
+  e.preventDefault(); // Evitar la recarga de la página al enviar el formulario
+  const optionValue = document.getElementById("option");
+  //userName.textContent = optionValue.value;
+  closeModalChange();
+});
 
 
+// --- Filtro Canciones cortas y largas ---
+const shortSongsFilter = document.getElementById("short-songs");
+shortSongsFilter.addEventListener('click', () => {
+  songsContainer.innerHTML = ""; // Limpia el contenedor
 
+  songsList.forEach(song => {
+    const audio = new Audio(song.filepath);
+    let minutes = 0;
+    audio.addEventListener('loadedmetadata', () => {
+      minutes = Math.floor(audio.duration / 60);
+      console.log(minutes);
+      if (minutes < 3) {
+        createSongItem(song);
+      }
+    });
+  });
+})
+
+
+const longSongsFilter = document.getElementById("long-songs");
+longSongsFilter.addEventListener('click', () => {
+  songsContainer.innerHTML = ""; // Limpia el contenedor
+
+  songsList.forEach(song => {
+    const audio = new Audio(song.filepath);
+    let minutes = 0;
+    audio.addEventListener('loadedmetadata', () => {
+      minutes = Math.floor(audio.duration / 60);
+      console.log(minutes);
+      if (minutes >= 3) {
+        createSongItem(song);
+      }
+    });
+  });
+})
